@@ -134,6 +134,26 @@ Then set the device Wi-Fi proxy to your host `IP:8080` (Burp) and use the app.
 
 > If the `frida` command is not on PATH, use `py -3.13 -m frida_tools.repl` instead of `frida`.
 
+### If `frida -f` times out — use the bundled runner (recommended)
+
+On some apps/emulators (Instagram is common) `frida -f` fails with
+*"Failed to spawn: unexpectedly timed out while waiting for app to launch"* even though
+spawning actually works. **`frida\run.py`** does the spawn+attach+resume manually (which
+does not hang) and bundles the Java bridge:
+
+```powershell
+py -3.13 frida\run.py                              # Instagram + tigon_bypass.js
+py -3.13 frida\run.py <package> [script.js ...]    # custom target + one or MORE scripts
+```
+
+Pass extra scripts to load several at once (the equivalent of the CLI's repeated `-l`):
+
+```powershell
+py -3.13 frida\run.py com.instagram.android frida\tigon_bypass.js my-probe.js
+```
+
+It prints `[+] Tigon initHybrid hooked`, keeps the app hooked, and detaches on Ctrl-C.
+
 ---
 
 ## Testing / verifying the bypass
@@ -152,7 +172,7 @@ Then set the device Wi-Fi proxy to your host `IP:8080` (Burp) and use the app.
 
 | Symptom | Cause & fix |
 |---|---|
-| `frida -f` → *"timed out while waiting for app to launch"* | Transient (not anti-frida). App already running or slow first-launch. `adb shell am force-stop com.instagram.android` and retry. |
+| `frida -f` → *"timed out while waiting for app to launch"* | The CLI's spawn flow hangs even though spawning works (not anti-frida). First try `adb shell am force-stop com.instagram.android` + retry; if it keeps happening, **use `py -3.13 frida\run.py`** (spawn+attach+resume, does not hang). |
 | App crashes on inject (tombstone shows `frida-agent` / stack overflow) | A script that hooks the same method repeatedly recurses. `tigon_bypass.js` hooks once; keep that guard in custom scripts. |
 | Login shows *"An unexpected error occurred"* | Hook installed too late — use **`-f` (spawn)**, not `-U` (attach). |
 | `ReferenceError: 'Java' is not defined` | Frida 17 raw scripts have no Java bridge. Run via the **`frida` CLI** (frida-tools loads it). |

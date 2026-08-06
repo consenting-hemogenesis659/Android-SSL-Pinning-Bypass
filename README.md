@@ -95,9 +95,10 @@ patchapk/
 │   ├── GUIDE-frida.md                 #   Frida runtime method (Windows setup + test)
 │   ├── GUIDE-patch.md                 #   static patch method (Windows setup + test)
 │   └── INSTAGRAM-ANALYSIS.md                    #   analysis writeup + architecture diagrams
-├── frida/                             # runtime hook scripts
+├── frida/                             # runtime hook scripts + runner
 │   ├── tigon_bypass.js               #   Meta/Tigon + generic bypass  ← use this
-│   └── generic-ssl-unpinning.js  # generic + older Meta liger (no Tigon); Eltion
+│   ├── generic-ssl-unpinning.js      #   generic + older Meta liger (no Tigon); Eltion
+│   └── run.py                        #   spawn+inject runner (if `frida -f` times out)
 └── patcher/                           # static patch/repackage tool
     ├── patch.py                       #   CLI
     ├── config.py                      #   tunable settings
