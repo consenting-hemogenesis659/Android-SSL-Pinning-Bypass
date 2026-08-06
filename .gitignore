@@ -1,0 +1,54 @@
+# ---- Python ----
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- Downloaded / cached tools ----
+# APKEditor.jar is auto-downloaded by patch.py on first use
+.tools/
+
+# ---- App binaries (large + copyrighted; never commit) ----
+*.apk
+*.apkm
+*.xapk
+*.apks
+*.dex
+*.so
+# (source scripts renamed to lib*.js.so are build artifacts, not committed either)
+
+# ---- Signing material (secrets) ----
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+
+# ---- Build / run artifacts ----
+temp/
+out/
+build/
+dist/
+*.log
+*.tmp
+
+# ---- Frida server binary (large) ----
+frida-server*
+!frida-server.md
+
+# ---- Screenshots / captures ----
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pcap
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

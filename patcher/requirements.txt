@@ -1,0 +1,9 @@
+# Python dependencies for the STATIC patch tool (patch.py). Python 3.10+.
+#   pip install -r requirements.txt
+#
+# The Frida runtime method (tigon_bypass.js) is NOT covered here — it uses a
+# separate Python 3.11+ environment:  pip install frida==<ver> frida-tools
+# (see GUIDE-frida.md).
+
+lief>=0.12.1
+requests>=2.27.1
